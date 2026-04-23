@@ -1,0 +1,845 @@
+# version: '3.8'
+
+services:
+  # mongodb:
+  #   image: mongodb/mongodb-community-server:latest
+  #   container_name: mongodb
+  #   ports:
+  #     - "27018:27017"
+  #   environment:
+  #     - MONGODB_INITDB_ROOT_USERNAME=admin
+  #     - MONGODB_INITDB_ROOT_PASSWORD=your_mongo_password
+  #   volumes:
+  #     - mongo_data:/data/db
+  #   cpuset: "0-13"
+  #   networks:
+  #     - app_network
+  #   dns:
+  #     - 127.0.0.11
+  mongodb:
+    build: ./services/mongodb
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:?MONGO_PASSWORD is required}
+      - REPL_SET_NAME=rs0
+    networks:
+      - app_network
+    dns:
+      - 127.0.0.11
+    volumes:
+      - mongo_data:/data/db
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z-cpuv1
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD:-minioadmin}
+      - TZ=Asia/Kolkata
+    command: server /data --console-address ":9001"
+    cpuset: "0-13"
+    networks:
+      - app_network
+
+  redis:
+    image: bitnami/redis:latest
+    container_name: redis
+    user: root
+    ports:
+      - "6379:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - TZ=Asia/Kolkata
+    cpuset: "0-13"
+    networks:
+      - app_network
+    # volumes:
+    #   - ./redis_data:/bitnami/redis/data
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    user: "0"
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+      - loki_data:/loki
+    environment:
+      - TZ=Asia/Kolkata
+    ports:
+      - "3100:3100"
+    # cpuset: "0-13"
+    networks:
+      - app_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - TZ=Asia/Kolkata
+    ports:
+      - "3000:3000"
+    cpuset: "0-13"
+    networks:
+      - app_network
+
+  delete_service:
+    build:
+      context: ./services/stream_handling_service
+      dockerfile: Dockerfile.delete
+    container_name: delete_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_PASSWORD:-minioadmin}
+      - MINIO_BUCKET=frames
+      - DELETE_DUR=2
+      - TZ=Asia/Kolkata
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - minio
+
+  counter_staff_detection_service1:
+    build: ./services/counter_staff_detection_service
+    container_name: counter_staff_detection_service1
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+      - INPUT_QUEUE_NAME=stream:cam:1
+      - GROUP_NAME=cg:cam:counter_staff_detection1
+      - OUTPUT_QUEUE_NAME_1=database:queue:0
+      - YOLO_MODEL_URL=http://yolo_service:8082/predict
+      - TARGET_COLLECTION_NAME=counter_staff_collection
+      - STAFF_CUSTOMER_CLASSIFICATION_URL=http://staff_customer_classification_service:8000/predict
+      - VISUALIZE=True
+    cpuset: "0-13"
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - stream_handling_service
+      # - yolo_service
+      - grafana
+      - db_service
+      - mongodb
+      - db_sync_service
+    volumes:
+      - ./services/counter_staff_detection_service:/workspace
+
+  cafe_counter_staff_detection_service:
+    build: ./services/cafe_counter_staff_detection_service
+    container_name: cafe_counter_staff_detection_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+      - INPUT_QUEUE_NAME=stream:cam:2
+      - GROUP_NAME=cg:cam:counter_staff_detection2
+      - OUTPUT_QUEUE_NAME_1=database:queue:0
+      - YOLO_MODEL_URL=http://yolo_service:8082/predict
+      - TARGET_COLLECTION_NAME=counter_staff_collection
+      - VISUALIZE=True
+      - STAFF_CUSTOMER_CLASSIFICATION_URL=http://staff_customer_classification_service:8000/predict
+      - CUDA_VISIBLE_DEVICES=0
+      - NVIDIA_VISIBLE_DEVICES=all
+    cpuset: "0-13"
+    runtime: nvidia
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - stream_handling_service
+      - grafana
+      - db_service
+      - mongodb
+      - yolo_service
+      - db_sync_service
+    env_file:
+      - ./services/cafe_counter_staff_detection_service/.env
+    volumes:
+      - ./viz_output_cam2:/workspace/viz_output
+      - ./services/cafe_counter_staff_detection_service/artifacts/insightface_models:/workspace/insightface_models
+
+  table_occupancy_back_lobby:
+    build: ./services/table_occupancy_back_lobby
+    container_name: table_occupancy_back_lobby
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+      - INPUT_QUEUE_NAME=stream:cam:3
+      - GROUP_NAME=cg:cam:table_detection_and_cleaning1
+      - KMEANS_MODEL_PATH=/workspace/artifacts/kmeans_model_back_lobby.pkl
+      - OUTPUT_QUEUE_NAME_1=database:queue:0
+      # - GROUNDING_DINO_URL=http://grounding_dino_service:8081/predict
+      - YOLO_MODEL_URL=http://yolo_service:8082/predict
+      - PLATE_MODEL_URL=http://yolo_service:8082/predict
+      - LOGGING_SERVICE_NAME=table_occupancy_back_lobby
+      - VISUALIZE=True
+      - BUFFER_SIZE=30
+      - PERCENTAGE_DIRTY_IN_BUFFER=80
+      - PERCENTAGE_OCCUPIED_IN_BUFFER=80
+      - CONSECUTIVE_CLEAN_FOR_RESOLUTION=30
+      - CONSECUTIVE_UNOCCUPIED_FOR_RESOLUTION=30
+      - CONFIG_UPDATE_INTERVAL=1800
+      - CONFIG_UPDATE_IOU_THRESHOLD=0.8
+      # - ROTATION=ROTATE_90_COUNTERCLOCKWISE
+      # - MASK_PATH=/workspace/artifacts/mask_model_video_1.json
+    cpuset: "0-13"
+    volumes:
+      - ./services/table_occupancy_back_lobby/artifacts:/workspace/artifacts
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - stream_handling_service
+      # - grounding_dino_service
+      # - yolo_service
+      - grafana
+      - db_service
+      - mongodb
+      - db_sync_service
+
+  table_occupancy_left_lobby:
+    build: ./services/table_occupancy_left_lobby
+    container_name: table_occupancy_left_lobby
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+      - INPUT_QUEUE_NAME=stream:cam:4
+      - GROUP_NAME=cg:cam:table_detection_and_cleaning2
+      - KMEANS_MODEL_PATH=/workspace/artifacts/kmeans_model_Left_Lobby_20_12_2025.pkl
+      # - MASK_PATH=/workspace/artifacts/mask_model_left_lobby.json
+      - OUTPUT_QUEUE_NAME_1=database:queue:0
+      # - GROUNDING_DINO_URL=http://grounding_dino_service:8081/predict
+      - YOLO_MODEL_URL=http://yolo_service:8082/predict
+      - PLATE_MODEL_URL=http://yolo_service:8082/predict
+      - LOGGING_SERVICE_NAME=table_occupancy_left_lobby
+      - VISUALIZE=True
+      - BUFFER_SIZE=30
+      - PERCENTAGE_DIRTY_IN_BUFFER=80
+      - PERCENTAGE_OCCUPIED_IN_BUFFER=80
+      - CONSECUTIVE_CLEAN_FOR_RESOLUTION=30
+      - CONSECUTIVE_UNOCCUPIED_FOR_RESOLUTION=30
+      - CONFIG_UPDATE_INTERVAL=1800
+      - CONFIG_UPDATE_IOU_THRESHOLD=0.7
+      # - ROTATION=ROTATE_90_COUNTERCLOCKWISE
+    cpuset: "0-13"
+    volumes:
+      - ./services/table_occupancy_left_lobby/artifacts:/workspace/artifacts
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - stream_handling_service
+      # - grounding_dino_service
+      # - yolo_service
+      - grafana
+      - db_service
+      - mongodb
+      - db_sync_service
+
+  table_occupancy_cafe:
+    build: ./services/table_occupancy_cafe
+    container_name: table_occupancy_cafe
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+      - INPUT_QUEUE_NAME=stream:cam:2
+      - GROUP_NAME=cg:cam:table_detection_and_cleaning3
+      - OUTPUT_QUEUE_NAME_1=database:queue:0
+      # - GROUNDING_DINO_URL=http://grounding_dino_service:8081/predict
+      - YOLO_MODEL_URL=http://yolo_service:8082/predict
+      - LOGGING_SERVICE_NAME=table_occupancy_cafe
+      - VISUALIZE=True
+      - BUFFER_SIZE=60
+      - PERCENTAGE_DIRTY_IN_BUFFER=34
+      - PERCENTAGE_OCCUPIED_IN_BUFFER=34
+      - CONSECUTIVE_CLEAN_FOR_RESOLUTION=60
+      - CONSECUTIVE_UNOCCUPIED_FOR_RESOLUTION=60
+      - CONFIG_UPDATE_INTERVAL=1800
+      - CONFIG_UPDATE_IOU_THRESHOLD=0.1001
+    cpuset: "0-13"
+    volumes:
+      - ./services/table_occupancy_cafe/artifacts:/workspace/artifacts
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - stream_handling_service
+      - grafana
+      - db_service
+      - mongodb
+      - db_sync_service
+
+  table_occupancy_kiosk:
+    build: ./services/table_occupancy_kiosk
+    container_name: table_occupancy_kiosk
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+      - INPUT_QUEUE_NAME=stream:cam:6
+      - GROUP_NAME=cg:cam:table_detection_and_cleaning4
+      - OUTPUT_QUEUE_NAME_1=database:queue:0
+      # - GROUNDING_DINO_URL=http://grounding_dino_service:8081/predict
+      - YOLO_MODEL_URL=http://yolo_service:8082/predict
+      - LOGGING_SERVICE_NAME=table_occupancy_kiosk
+      - VISUALIZE=True
+      - BUFFER_SIZE=60
+      - PERCENTAGE_DIRTY_IN_BUFFER=34
+      - PERCENTAGE_OCCUPIED_IN_BUFFER=34
+      - CONSECUTIVE_CLEAN_FOR_RESOLUTION=60
+      - CONSECUTIVE_UNOCCUPIED_FOR_RESOLUTION=60
+      - CONFIG_UPDATE_INTERVAL=1800
+      - CONFIG_UPDATE_IOU_THRESHOLD=0.8
+    cpuset: "0-13"
+    volumes:
+      - ./services/table_occupancy_kiosk/artifacts:/workspace/artifacts
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - stream_handling_service
+      - grafana
+      - db_service
+      - mongodb
+      - db_sync_service
+
+  entry_exit_service:
+    build: ./services/entry_exit_service
+    container_name: entry_exit_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+      - INPUT_RTSP=rtsp://CAMERA_USER:CAMERA_PASS@192.168.10.2:554/live
+      # - INPUT_RTSP=rtsp://192.168.2.106:8554/entrance
+      - GROUP_NAME=cg:cam:entry_exit_service
+      - YOLO_SERVICE_URL=http://age_gender_yolo_service:8083/predict
+      - OUTPUT_QUEUE_NAME_1=database:queue:0
+      - TARGET_COLLECTION_NAME=entry_exit_collection
+      - CONFIG_PATH=/workspace/config.json
+      - VISUALIZE=True
+    cpuset: "0-13"
+    networks:
+      - app_network
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+    depends_on:
+      - redis
+      - loki
+      - grafana
+      - db_service
+      - mongodb
+      - age_gender_yolo_service
+      - db_sync_service
+
+  exit_emotion_detection_service:
+    build: ./services/exit_service
+    container_name: exit_emotion_detection_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+      - INPUT_QUEUE_NAME=stream:cam:6
+      - GROUP_NAME=cg:cam:exit_emotion_detection_service
+      - OUTPUT_QUEUE_NAME_1=database:queue:0
+      - TARGET_COLLECTION=customer_emotions
+      - TARGET_FPS=1
+      - VISUALIZE=True
+    cpuset: "0-13"
+    volumes:
+      - ./services/exit_service/face_detection_06022026.pt:/workspace/face_detection_06022026.pt
+      - ./services/exit_service/bnb_4bit_model:/workspace/bnb_4bit_model
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - grafana
+      - db_service
+      - mongodb
+      - stream_handling_service
+      # - db_sync_service
+
+      #  crew_room_service:
+      #    build: ./services/crew_room_service
+      #    container_name: crew_room_service
+      #    environment:
+      #      - REDIS_HOST=redis
+      #      - REDIS_PORT=6379
+      #      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      #      - TZ=Asia/Kolkata
+      #      - INPUT_QUEUE_NAME=stream:cam:5
+      #      - GROUP_NAME=cg:cam:crew_room
+      #      - OUTPUT_QUEUE_NAME_1=database:queue:0
+      #      - YOLO_MODEL_URL=http://yolo_service:8082/predict
+      #      - TARGET_COLLECTION_NAME=crew_room_collection
+      #      - VISUALIZE=True
+      #      - YOLO_MODEL=/workspace/person_detection_model_17_02_2026.pt
+      #    cpuset: "0-13"
+      #    runtime: nvidia
+      #    deploy:
+      #      resources:
+      #        reservations:
+      #          devices:
+      #            - driver: nvidia
+      #              count: 1
+      #              capabilities: [ gpu ]
+      #    networks:
+      #      - app_network
+      #    volumes:
+      #      - ./services/crew_room_service/person_detection_model_17_02_2026.pt:/workspace/person_detection_model_17_02_2026.pt
+      #    depends_on:
+      #      - redis
+      #      - loki
+      #      - grafana
+      #      - db_service
+      #      - stream_handling_service
+      #      - yolo_service
+      #      - db_sync_service
+      #      - mongodb
+      # - delete_service
+
+  kiosk_person_service:
+    build: ./services/kiosk_person_service
+    container_name: kiosk_person_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+      - INPUT_QUEUE_NAME=stream:cam:6
+      - GROUP_NAME=cg:cam:kiosk_person_service
+      - OUTPUT_QUEUE_NAME=database:queue:0
+      - YOLO_MODEL_URL=http://yolo_service:8082/predict
+      - VISUALIZE=True
+      - TARGET_COLLECTION_NAME=kiosk_person_collection
+    networks:
+      - app_network
+    cpuset: "0-13"
+    depends_on:
+      - redis
+      - loki
+      - stream_handling_service
+      - db_service
+      - mongodb
+      - yolo_service
+      - db_sync_service
+
+  db_service:
+    build: ./services/db_service
+    container_name: db_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MONGO_URI=mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:?MONGO_PASSWORD is required}@mongodb:27017/?replicaSet=rs0&authSource=admin
+      - MONGO_DB=tolichowki
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+      - INPUT_QUEUE_NAME=database:queue:0
+    cpuset: "0-13"
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - mongodb
+
+  db_sync_service:
+    build: ./services/db_sync_service
+    container_name: db_sync_service
+    environment:
+      - MONGODB_SOURCE=mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:?MONGO_PASSWORD is required}@mongodb:27017/?replicaSet=rs0&authSource=admin
+      - MONGODB_DESTINATION=${MONGODB_DESTINATION:?MONGODB_DESTINATION is required}
+      - MONGODB_NAME=tolichowki
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - SYNC_DURATION=0.5
+      - TZ=Asia/Kolkata
+    cpuset: "0-13"
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - mongodb
+      - db_service
+
+  stream_handling_service:
+    build:
+      context: ./services/stream_handling_service
+      dockerfile: Dockerfile.stream
+    container_name: stream_handling_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_PASSWORD:-minioadmin}
+      - MINIO_BUCKET=frames
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+    cpuset: "0-13"
+    shm_size: 2g
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - minio
+      - loki
+      - grafana
+      - mongodb
+      - delete_service
+
+  yolo_service:
+    build:
+      context: ./services/yolo_service
+      dockerfile: Dockerfile.plate
+    container_name: yolo_service
+    ports:
+      - "8082:8082"
+    environment:
+      - REDIS_HOST=redis
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - CUDA_VISIBLE_DEVICES=0
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - TZ=Asia/Kolkata
+      - DEVICE=cuda
+      - PORT=8082
+      - MODEL_ID=plate_detection_model_19_01_2026.pt
+    cpuset: "0-13"
+    runtime: nvidia
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - grafana
+
+  age_gender_yolo_service:
+    build:
+      context: ./services/yolo_service
+      dockerfile: Dockerfile.age_gender
+    container_name: age_gender_yolo_service
+    ports:
+      - "8083:8083"
+    environment:
+      - REDIS_HOST=redis
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - CUDA_VISIBLE_DEVICES=0
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - TZ=Asia/Kolkata
+      - DEVICE=cuda
+      - PORT=8083
+      - MODEL_ID=age_gender_yolo.pt
+    cpuset: "0-13"
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - grafana
+
+  staff_customer_classification_service:
+    build: ./services/staff_customer_classification_service
+    container_name: staff_customer_classification_service
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - MODEL_PATH=/workspace/classifier_customer_vs_staff.pkl
+      - DEVICE=cuda
+      - NVIDIA_VISIBLE_DEVICES=all
+    runtime: nvidia
+    volumes:
+      - ./services/staff_customer_classification_service/classifier_customer_vs_staff.pkl:/workspace/classifier_customer_vs_staff.pkl
+    networks:
+      - app_network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    depends_on:
+      - redis
+      - loki
+
+  ip_monitor_service:
+    build: ./services/ip_monitor_service
+    container_name: ip_monitor_service
+    environment:
+      - TZ=Asia/Kolkata
+    env_file:
+      - ./services/ip_monitor_service/.env
+    volumes:
+      - ./services/ip_monitor_service/last_ip.txt:/app/last_ip.txt
+    networks:
+      - app_network
+    restart: always
+
+  video_classification_service:
+    build: ./services/video_classification_service
+    container_name: video_classification_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - XCLIP_MODEL_URL=http://xclip_service:8085/predict
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+    cpuset: "0-13"
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - grafana
+      - mongodb
+      - minio
+      - db_service
+      - stream_handling_service
+      - xclip_service
+
+  xclip_service:
+    build: ./services/xclip_service
+    container_name: xclip_service
+    environment:
+      - TZ=Asia/Kolkata
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - PORT=8085
+      - CUDA_VISIBLE_DEVICES=0
+      - NVIDIA_VISIBLE_DEVICES=all
+    runtime: nvidia
+    networks:
+      - app_network
+    restart: always
+    depends_on:
+      - redis
+      - loki
+      - minio
+    ports:
+      - "8085:8085"
+    volumes:
+      - ./services/xclip_service/models:/workspace/models
+  # app-frontend:
+  #   build:
+  #     context: ./services/frontend_service
+  #     dockerfile: Dockerfile.app.frontend
+  #     args:
+  #       - GITHUB_TOKEN=${GITHUB_TOKEN}
+  #       - GITHUB_REPO=${GITHUB_REPO:-saadxelp/ml-project}
+  #       - BRANCH=${BRANCH:-main}
+  #   container_name: app-frontend
+  #   environment:
+  #     - REDIS_HOST=redis
+  #     - LOKI_URL=http://loki:3100/loki/api/v1/push
+  #     - TZ=Asia/Kolkata
+  #   cpuset: "0-13"
+  #   volumes:
+  #     - frontend_repo:/workspace/ml-project
+  #   networks:
+  #     - app_network
+  #   depends_on:
+  #     - redis
+  #     - loki
+  #     - grafana
+  #     - app-backend
+  #   ports:
+  #     - "3001:3000"
+
+  # app-backend:
+  #   build:
+  #     context: ./services/frontend_service
+  #     dockerfile: Dockerfile.app.backend
+  #     args:
+  #       - GITHUB_TOKEN=${GITHUB_TOKEN}
+  #       - GITHUB_REPO=${GITHUB_REPO:-saadxelp/ml-project}
+  #       - BRANCH=${BRANCH:-main}
+  #   container_name: app-backend
+  #   environment:
+  #     - REDIS_HOST=redis
+  #     - MONGO_URI=mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD}@mongodb:27017/mcd_video_analytics?authSource=admin
+  #     - MONGO_DB_NAME=mcd_video_analytics
+  #     - LOKI_URL=http://loki:3100/loki/api/v1/push
+  #     - TZ=Asia/Kolkataf
+  #     - FLASK_ENV=production
+  #     - FLASK_DEBUG=0
+  #     - APP_SECRET_KEY=${APP_SECRET_KEY:-replace-with-a-long-random-string}
+  #     - JWT_SECRET_KEY=${JWT_SECRET_KEY:-replace-with-a-long-random-string}
+  #     - JWT_ACCESS_TOKEN_EXPIRES_MINUTES=60
+  #   cpuset: "12,13"
+  #   volumes:
+  #     - backend_repo:/workspace/ml-project
+  #   networks:
+  #     - app_network
+  #   ports:
+  #     - "5000:5000"
+
+  customer_path_tracking_service:
+    build: ./services/customer_path_tracking_service
+    container_name: customer_path_tracking_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+      # - RTSP_URL=rtsp://CAMERA_USER:CAMERA_PASS@192.168.10.13:554/live
+      - INPUT_QUEUE_NAME=stream:cam:1
+      - OUTPUT_QUEUE_NAME_1=database:queue:0
+      - GROUP_NAME=cg:cam:customer_path
+      - CAMERA_ID=1
+      - SAMPLE_FPS=6
+    cpuset: "0-13"
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - stream_handling_service
+    volumes:
+      - ./services/customer_path_tracking_service/person_detection_model_17_02_2026.pt:/workspace/person_detection_model_17_02_2026.pt
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+
+  store_opening_closing_service:
+    build: ./services/store_opening_closing_service
+    container_name: store_opening_closing_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+      - INPUT_QUEUE_NAME=stream:cam:6
+      - GROUP_NAME=cg:cam:store_opening_closing_service
+      - OUTPUT_QUEUE_NAME=store_status_output
+      - ALERT_QUEUE_NAME=database:queue:0
+    cpuset: "0-13"
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - stream_handling_service
+
+  dirty_floor_service:
+    build: ./services/dirty_floor_service
+    container_name: dirty_floor_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - TZ=Asia/Kolkata
+      # Handle multiple queues by splitting with comma, or script logic
+      - INPUT_QUEUE_NAMES=stream:cam:1,stream:cam:7
+      - GROUP_NAME=cg:cam:dirty_floor_service
+      - MODEL_PATH=/workspace/ViT_HQQ_LoRA_Masked_16_03_2026_(1).pth
+      # MASK_SET_NAME handled internally by camera ID mapping in service.py
+      - VISUALIZE=True
+      - BUFFER_DURATION_SECONDS=60
+      - DIRTY_THRESHOLD_PERCENT=90
+      - CLEAN_THRESHOLD_PERCENT=50
+      - OUTPUT_QUEUE_NAME=database:queue:0
+      - CUDA_VISIBLE_DEVICES=0
+      - NVIDIA_VISIBLE_DEVICES=all
+    cpuset: "0-13"
+    runtime: nvidia
+    volumes:
+      - ./services/dirty_floor_service/ViT_HQQ_LoRA_Masked_16_03_2026_(1).pth:/workspace/ViT_HQQ_LoRA_Masked_16_03_2026_(1).pth
+    networks:
+      - app_network
+    depends_on:
+      - redis
+      - loki
+      - stream_handling_service
+
+#  drawer_detection_service:
+#    build: ./services/drawer_detection
+#    container_name: drawer_detection_service
+#    environment:
+#      - REDIS_HOST=redis
+#      - REDIS_PORT=6379
+#      - LOKI_URL=http://loki:3100/loki/api/v1/push
+#      - TZ=Asia/Kolkata
+#      - INPUT_QUEUE_NAME=stream:cam:1
+#      - GROUP_NAME=cg:cam:drawer_detection_service
+#      - OUTPUT_QUEUE_NAME=drawer_status_output
+#      - VIS_QUEUE_NAME=stream:visualization:drawer:1
+#      - DRAWER_DETECT_TIMEOUT=5
+#      - STATE_CHANGE_DURATION=10
+#      - VISUALIZE=True
+#      - CAMERA_ID=1
+#      - YOLO_MODEL_URL=http://yolo_service:8082/predict
+#      - ALERT_QUEUE_NAME=database:queue:0
+#    networks:
+#      - app_network
+#    depends_on:
+#      - redis
+#      - loki
+#      - stream_handling_service
+#      - yolo_service
+
+
+networks:
+  app_network:
+    name: app_network
+    driver: bridge
+
+volumes:
+  mongo_data:
+  loki_data:

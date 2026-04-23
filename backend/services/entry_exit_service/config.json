@@ -1,0 +1,36 @@
+{
+  "entrance": 
+  [
+    {"points": 
+    [
+      {"x": 469.3333333333333, "y": 511.2}, 
+      {"x": 787.6036036036036, "y": 351.59999999999997}, 
+      {"x": 872.936936936937, "y": 46.8}, 
+      {"x": 204.1081081081081, "y": 292.8}
+      ],
+       "mode": "region", "strokeColor": "#00FFFF", "fillColor": "#00FFFF", "fillOpacity": 0.1, "strokeWidth": 3, "detectionMode": "inside", "enableMask": false, "id": "entrance_region_1765975054263", "name": "Region 1"
+       }, 
+    {"points": 
+    [
+      {"x": 469.3333333333333, "y": 514.8}, 
+      {"x": 791.063063063063, "y": 354}, 
+      {"x": 906.3783783783783, "y": 339.59999999999997}, 
+      {"x": 418.5945945945946, "y": 610.8}
+      ], 
+      "mode": "region", "strokeColor": "#FF00FF", "fillColor": "#FF00FF", "fillOpacity": 0.1, "strokeWidth": 3, "detectionMode": "inside", "enableMask": false, "id": "entrance_region_1765975085361", "name": "Region 2"}, 
+    {"points": [
+      {"x": 419.7477477477477, "y": 610.8}, 
+      {"x": 914.4504504504505, "y": 338.4}, 
+      {"x": 995.1711711711712, "y": 418.8}, 
+      {"x": 464.7207207207207, "y": 715.1999999999999}], 
+      "mode": "region", "strokeColor": "#FFFF00", "fillColor": "#FFFF00", "fillOpacity": 0.1, "strokeWidth": 3, "detectionMode": "inside", "enableMask": false, "id": "entrance_region_1765975105435", "name": "Region 3"}, 
+    {"points": [
+      {"x": 475.0990990990991, "y": 717.6}, 
+      {"x": 998.6306306306307, "y": 420}, 
+      {"x": 900.6126126126126, "y": 294}, 
+      {"x": 1077.045045045045, "y": 152.4}, 
+      {"x": 1278.8468468468468, "y": 330}, 
+      {"x": 1277.6936936936936, "y": 715.1999999999999}
+      ], 
+      "mode": "region", "strokeColor": "#00FF00", "fillColor": "#00FF00", "fillOpacity": 0.1, "strokeWidth": 3, "detectionMode": "inside", "enableMask": false, "id": "entrance_region_1765975131599", "name": "Region 4"
+      }]}

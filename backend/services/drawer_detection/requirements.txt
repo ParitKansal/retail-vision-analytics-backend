@@ -1,0 +1,6 @@
+redis==7.1.0
+requests==2.32.5
+opencv-python-headless
+python-dotenv==1.2.1
+python-logging-loki==0.3.1
+numpy<2.0.0

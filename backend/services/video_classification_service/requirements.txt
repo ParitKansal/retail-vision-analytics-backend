@@ -1,0 +1,8 @@
+redis==7.1.0
+requests==2.32.5
+python-dotenv==1.2.1
+python-logging-loki==0.3.1
+opencv-python-headless==4.11.0.86
+numpy==2.0.2
+boto3==1.42.52
+ffmpeg-python==0.2.0

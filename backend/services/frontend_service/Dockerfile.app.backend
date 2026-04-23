@@ -1,0 +1,24 @@
+FROM python:3.12-slim
+
+WORKDIR /workspace
+
+# Build arguments for sensitive data
+ARG GITHUB_TOKEN
+ARG GITHUB_REPO=saadxelp/ml-project
+ARG BRANCH=main
+
+# Persist build arguments as environment variables for runtime script
+ENV GITHUB_TOKEN=$GITHUB_TOKEN
+ENV GITHUB_REPO=$GITHUB_REPO
+ENV BRANCH=$BRANCH
+
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+# Copy startup script and entrypoint
+COPY start_backend.py /workspace/start_backend.py
+COPY entrypoint_backend.sh /workspace/entrypoint_backend.sh
+RUN chmod +x /workspace/start_backend.py /workspace/entrypoint_backend.sh
+
+EXPOSE 5000
+
+CMD ["/workspace/entrypoint_backend.sh"]

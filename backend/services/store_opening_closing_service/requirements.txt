@@ -1,0 +1,7 @@
+opencv-python-headless
+redis
+numpy
+requests
+python-dotenv
+shapely
+python-logging-loki

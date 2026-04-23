@@ -1,0 +1,14 @@
+redis==7.1.0
+requests==2.32.5
+opencv-python
+python-dotenv==1.2.1
+python-logging-loki==0.3.1
+shapely==2.1.2
+insightface==0.7.3
+# onnxruntime-gpu has no aarch64 build; CPU version works for both ARM and x86
+onnxruntime>=1.17.1
+numpy<2.0.0
+transformers>=4.40.0
+Pillow>=10.0.0
+# Install CPU torch — avoids pulling a ~2 GB CUDA wheel on aarch64 Docker builds
+torch>=2.0.0 --index-url https://download.pytorch.org/whl/cpu

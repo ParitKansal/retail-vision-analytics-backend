@@ -1,0 +1,85 @@
+[
+    {
+        "points": [
+            {
+                "x": 1142.8120836700732,
+                "y": 68.27924401226304
+            },
+            {
+                "x": 1147.5318474694304,
+                "y": 70.48181498405437
+            },
+            {
+                "x": 1138.092319870716,
+                "y": 136.55851203048755
+            },
+            {
+                "x": 1134.9458106711445,
+                "y": 136.55851203048755
+            }
+        ],
+        "mode": "region",
+        "strokeColor": "#00FFFF",
+        "fillColor": "#00FFFF",
+        "fillOpacity": 0.1,
+        "strokeWidth": 1,
+        "detectionMode": "inside",
+        "enableMask": true,
+        "id": "left_region_1770831859575",
+        "name": "Region 1"
+    },
+    {
+        "points": [
+            {
+                "x": 1215.1817952602182,
+                "y": 98.17108315231616
+            },
+            {
+                "x": 1227.7678320585044,
+                "y": 101.31759253547963
+            },
+            {
+                "x": 1205.7422676615038,
+                "y": 176.8338177314033
+            }
+        ],
+        "mode": "region",
+        "strokeColor": "#FF00FF",
+        "fillColor": "#FF00FF",
+        "fillOpacity": 0.1,
+        "strokeWidth": 1,
+        "detectionMode": "inside",
+        "enableMask": true,
+        "id": "left_region_1770831938523",
+        "name": "Region 2"
+    },
+    {
+        "points": [
+            {
+                "x": 24.228063222396543,
+                "y": 66.39131917759576
+            },
+            {
+                "x": 30.52108162153959,
+                "y": 66.39131917759576
+            },
+            {
+                "x": 36.81410002068264,
+                "y": 123.0284880745385
+            },
+            {
+                "x": 30.52108162153959,
+                "y": 124.60174276612024
+            }
+        ],
+        "mode": "region",
+        "strokeColor": "#FFFF00",
+        "fillColor": "#FFFF00",
+        "fillOpacity": 0.1,
+        "strokeWidth": 1,
+        "detectionMode": "inside",
+        "enableMask": true,
+        "id": "left_region_1770831971544",
+        "name": "Region 3"
+    }
+]

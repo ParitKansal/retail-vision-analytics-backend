@@ -1,0 +1,123 @@
+# =============================================================================
+# Secrets & Credentials
+# =============================================================================
+.env
+.env.*
+.env.build
+*.env.local
+!.env.example
+!sample.env
+
+# =============================================================================
+# Model Weights & Binary Artifacts
+# (large files — distribute via DVC, GDrive, or model registry instead)
+# =============================================================================
+*.pt
+*.pth
+*.pkl
+*.onnx
+*.ckpt
+*.bin
+*.safetensors
+*.h5
+
+# =============================================================================
+# Service-Local Virtual Environments
+# (each service sometimes has its own venv for local dev)
+# =============================================================================
+**/venv/
+**/.venv/
+**/env/
+**/ENV/
+**/__pypackages__/
+
+# =============================================================================
+# Python Bytecode & Caches
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# =============================================================================
+# Runtime-Generated Debug Frames
+# (test snapshots saved to service dirs during development)
+# =============================================================================
+services/**/frame_*.jpg
+services/**/frame_*.jpeg
+services/**/frame_*.png
+services/**/crop_*.jpg
+services/**/crop_*.jpeg
+
+# =============================================================================
+# Auto-Updated Table Configuration Artifacts
+# (written and hot-reloaded at runtime by table_occupancy_* services every 30 min)
+# =============================================================================
+services/*/artifacts/table_configs.json
+
+# =============================================================================
+# Runtime State Files
+# =============================================================================
+last_ip.txt
+services/ip_monitor_service/last_ip.txt
+services/maintenance_service/last_working_commit.txt
+
+# =============================================================================
+# Logs & Diagnostic Outputs
+# =============================================================================
+*.log
+**/*.log
+stream_lengths.csv
+
+# =============================================================================
+# Jupyter Notebooks & Checkpoints
+# (output cells can contain sensitive frame data or credentials)
+# =============================================================================
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+services/db_sync_service/notebook.ipynb
+
+# =============================================================================
+# Visualization & Scratch Output Directories
+# =============================================================================
+viz_output_cam2/
+viz_output_cam2.zip
+global_visualize/
+draw_opening_closing/ipynb_checkpoints*/
+
+# =============================================================================
+# Large Downloaded Model Directories
+# (pulled at container build time — not committed to the repo)
+# =============================================================================
+services/grounding_dino_service/artifacts/models--IDEA-Research--grounding-dino-base
+services/grounding_dino_service/artifacts/.locks
+services/grounding_dino_service/artifacts/grounding_dino_model_files
+services/kios_service/artifacts/kios_model_1.pth
+services/xclip_service/models/xclip-model
+services/cafe_counter_staff_detection_service/artifacts/insightface_models/models/buffalo_l
+services/cafe_counter_staff_detection_service/artifacts/insightface_models/models/buffalo_l.zip
+
+# =============================================================================
+# Redis Persistence Data
+# =============================================================================
+redis_data/
+
+# =============================================================================
+# Scratch / Notes Files
+# =============================================================================
+commands.txt
+services/stream_handling_service/settings copy.json
+
+# =============================================================================
+# OS & Editor Noise
+# =============================================================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo

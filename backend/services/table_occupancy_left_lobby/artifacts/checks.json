@@ -1,0 +1,304 @@
+{
+    "1": {
+        "priority": 69,
+        "checks": [
+            {
+                "left": 63,
+                "right": 0,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.05
+            },
+            {
+                "left": 0,
+                "right": 70,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.05
+            },
+            {
+                "left": 0,
+                "right": 0,
+                "up": 30,
+                "down": 0,
+                "table_overlap": 0.03
+            },
+            {
+                "left": 100,
+                "right": 0,
+                "up": 0,
+                "down": 30,
+                "table_overlap": 0.03
+            },
+            {
+                "left": 0,
+                "right": 100,
+                "up": 0,
+                "down": 30,
+                "table_overlap": 0.03
+            }
+
+        ]
+    },
+
+    "4": {
+        "priority": 49,
+        "checks": [
+            {
+                "left": 0,
+                "right": 0,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.05
+            }
+        ]
+    },
+    "5": {
+        "priority": 23,
+        "checks": [
+            {
+                "left": 0,
+                "right": 70,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.05
+            },
+            {
+                "left": 65,
+                "right": 0,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.05
+            },
+            {
+                "left": 0,
+                "right": 0,
+                "up": 30,
+                "down": 0,
+                "table_overlap": 0.09
+            },
+            {
+                "left": 0,
+                "right": 62,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.05
+            }
+        ]
+    },
+    "7": {
+        "left": 0,
+        "right": 0,
+        "up": 0,
+        "down": 0,
+        "axis_overlap": 0.5,
+        "table_overlap": 0.5,
+        "priority": 0
+    },
+    "8": {
+        "left": 0,
+        "right": 0,
+        "up": 0,
+        "down": 0,
+        "axis_overlap": 0.5,
+        "table_overlap": 0.5,
+        "priority": 4
+    },
+    "9": {
+        "left": 0,
+        "right": 0,
+        "up": 0,
+        "down": 0,
+        "axis_overlap": 0.5,
+        "table_overlap": 0.1,
+        "priority": 0
+    },
+    "10": {
+        "priority": 13,
+        "checks": [
+            {
+                "left": 0,
+                "right": 70,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.005
+            },
+            {
+                "left": 59,
+                "right": 0,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.05
+            },
+            {
+                "left": 40,
+                "right": 0,
+                "up": 0,
+                "down": 40,
+                "table_overlap": 0.05
+            },
+            {
+                "left": 0,
+                "right": 30,
+                "up": 30,
+                "down": 0,
+                "table_overlap": 0.01
+            },
+            {
+                "left": 0,
+                "right": 0,
+                "up": 30,
+                "down": 0,
+                "table_overlap": 0.07
+            }
+        ]
+    },
+    "11": {
+        "left": 0,
+        "right": 0,
+        "up": 0,
+        "down": 0,
+        "axis_overlap": 0.5,
+        "table_overlap": 0.5,
+        "priority": 5
+    },
+    "12": {
+        "left": 0,
+        "right": 0,
+        "up": 0,
+        "down": 0,
+        "axis_overlap": 0.5,
+        "table_overlap": 0.5,
+        "priority": 6
+    },
+    "14": {
+        "priority": 44,
+        "checks": [
+            {
+                "left": 20,
+                "right": 0,
+                "up": 9,
+                "down": 0,
+                "table_overlap": 0.05
+            },
+            {
+                "left": 0,
+                "right": 0,
+                "up": 9,
+                "down": 0,
+                "table_overlap": 0.03
+            },
+            {
+                "left": 0,
+                "right": 30,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.15
+            },
+            {
+                "left": 50,
+                "right": 0,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.25
+            }
+        ]
+    },
+    "15": {
+        "priority": 70,
+        "checks": [
+            {
+                "left": 70,
+                "right": 0,
+                "up": 34,
+                "down": 50,
+                "table_overlap": 0.08
+            },
+            {
+                "left": 60,
+                "right": 0,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.1
+            },
+            {
+                "left": 0,
+                "right": 0,
+                "up": 0,
+                "down": 20,
+                "table_overlap": 0.1
+            },
+            {
+                "left": 0,
+                "right": 0,
+                "up": 20,
+                "down": 0,
+                "table_overlap": 0.05
+            }
+        ]
+    },
+    "16": {
+        "priority": 72,
+        "checks": [
+            {
+                "left": 0,
+                "right": 0,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.05
+            }
+        ]
+    },
+    "18": {
+        "priority": 0,
+        "checks": [
+            {
+                "left": 0,
+                "right": 8,
+                "up": 8,
+                "down": 0,
+                "table_overlap": 0.01
+            },
+            {
+                "left": 40,
+                "right": 0,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.02
+            }
+        ]
+    },
+    "19": {
+        "left": 0,
+        "right": 0,
+        "up": 0,
+        "down": 0,
+        "axis_overlap": 0.5,
+        "table_overlap": 0.5,
+        "priority": 8
+    },
+    "21": {
+        "priority": 81,
+        "checks": [
+            {
+                "left": 0,
+                "right": 0,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.05
+            }
+        ]
+    },
+    "22": {
+        "priority": 1,
+        "checks": [
+            {
+                "left": 0,
+                "right": 0,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.05
+            }
+        ]
+    }
+}

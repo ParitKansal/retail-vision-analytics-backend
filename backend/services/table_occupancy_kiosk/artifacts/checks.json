@@ -1,0 +1,88 @@
+{
+    "1": {
+        "left": 0,
+        "right": 0,
+        "up": 0,
+        "down": 0,
+        "table_overlap": 0.5,
+        "priority": 1,
+        "checks": [
+            {
+                "left": 100,
+                "right": 0,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.0005
+            },
+            {
+                "left": 50,
+                "right": 0,
+                "up": 0,
+                "down": 40,
+                "table_overlap": 0.15
+            },
+            {
+                "left": 0,
+                "right": 60,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.005
+            }
+        ]
+    },
+    "2": {
+        "left": 0,
+        "right": 0,
+        "up": 0,
+        "down": 0,
+        "table_overlap": 0.5,
+        "priority": 2,
+        "checks": [
+            {
+                "left": 60,
+                "right": 0,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.05
+            },
+            {
+                "left": 0,
+                "right": 0,
+                "up": 40,
+                "down": 0,
+                "table_overlap": 0.15
+            },
+            {
+                "left": 0,
+                "right": 60,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.105
+            }
+        ]
+    },
+    "3": {
+        "left": 0,
+        "right": 0,
+        "up": 0,
+        "down": 0,
+        "table_overlap": 0.5,
+        "priority": 3,
+        "checks": [
+            {
+                "left": 10,
+                "right": 0,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.005
+            },
+            {
+                "left": 0,
+                "right": 2,
+                "up": 0,
+                "down": 0,
+                "table_overlap": 0.05
+            }
+        ]
+    }
+}

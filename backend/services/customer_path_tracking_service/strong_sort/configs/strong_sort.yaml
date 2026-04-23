@@ -1,0 +1,20 @@
+
+STRONGSORT:
+  # ReID model path
+  REID_CKPT: "osnet_x1_0_msmt17.pt"
+  
+  # Matching thresholds - CRITICAL for your issues
+  MAX_DIST: 0.2              # Appearance distance threshold (lower = stricter matching)
+  MAX_IOU_DISTANCE: 0.7      # Spatial distance threshold
+  
+  # Track management - HELPS WITH OCCLUSION
+  MAX_AGE: 120               # Keep ID alive for 120 frames (4 seconds at 30fps) after disappearing
+  N_INIT: 3                  # Frames to confirm new track (prevents quick ID switches)
+  
+  # Appearance memory - CRITICAL FOR RE-IDENTIFICATION
+  NN_BUDGET: 200             # Remember more appearance features (helps after occlusion)
+  MC_LAMBDA: 0.995           # Momentum for appearance updates (higher = more stable)
+  EMA_ALPHA: 0.9             # Exponential moving average
+  
+  # Camera motion compensation
+  ECC: True                  # Enable for static camera

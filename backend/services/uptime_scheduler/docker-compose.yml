@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  uptime_scheduler:
+    build: .
+    container_name: uptime_scheduler
+    volumes:
+      # Mount the HOST's docker socket so this container can control the host's docker
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Mount the project root so we can access the MAIN docker-compose.yml
+      # We assume this file is in backend/services/uptime_scheduler/
+      # So ../../../ is the project root (McD_backend)
+      # Wait, the main docker-compose is in backend/docker-compose.yml (../../)
+      - ../../:/backend_project
+    working_dir: /backend_project
+    environment:
+      # Pass these if needed, or rely on .env file inside container (copied in Dockerfile)
+      - TZ=Asia/Kolkata
+      - BACKEND_PROJECT_DIR=/backend_project
+      - COMPOSE_PROJECT_NAME=backend
+    command: [ "python", "-u", "/app/uptime_scheduler.py" ]
+    restart: unless-stopped
+    # No network needed unless it needs to talk to the internet (gmail)
+    # Bridge is fine

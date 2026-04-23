@@ -1,0 +1,12 @@
+requests
+redis
+torch
+torchvision
+transformers
+python-dotenv
+numpy
+Pillow
+opencv-python
+peft
+hqq
+accelerate
